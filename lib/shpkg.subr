@@ -1,0 +1,51 @@
+#!/bin/sh
+# Copyright 2023 Thomas de Grivel <thodg@kmx.io>
+
+set -e
+
+# Config
+SHPKG_DIR="${SHPKG_DIR:-~/shpkg}"
+SHPKG_SRC_DIR="${SHPKG_SRC_DIR:-${SHPKG_DIR}/src}"
+if ! [ -d "$SHPKG_SRC_DIR" ]; then
+    mkdir -p "$SHPKG_SRC_DIR"
+fi
+
+# Repo
+REPO_INDEX="${SHPKG_DIR}/repo_index"
+if ! [ -f "$REPO_INDEX" ]; then
+    echo "$REPO_INDEX: not found" >&2
+    exit 1
+fi
+
+# Repo routines
+repo_dir () {
+    repo_find "$@" | cut -d ' ' -f 2
+}
+
+repo_find () {
+    [ "x$#" = "x1" ] || return 1
+    grep "^$1 " "${REPO_INDEX}"
+}
+
+repo_git_url () {
+    repo_find "$@" | cut -d ' ' -f 3
+}
+
+repo_install () {
+    for REPO; do
+        REPO_DIR="$(repo_dir "$REPO")"
+        REPO_PARENT_DIR="$(repo_parent_dir "$REPO")"
+        REPO_GIT_URL="$(repo_git_url "$REPO")"
+        REPO_BASENAME="$(basename "$REPO_DIR")"
+        if ! [ -d "$REPO_DIR" ]; then
+            mkdir -p "${SHPKG_SRC_DIR}/$REPO_PARENT_DIR"
+            ( cd "${SHPKG_SRC_DIR}/$REPO_PARENT_DIR" &&
+                  git clone "$REPO_GIT_URL" "$REPO_BASENAME"
+            )
+        fi
+    done
+}
+
+repo_parent_dir () {
+    dirname "$(repo_dir "$REPO")"
+}

@@ -1,0 +1,32 @@
+#!/bin/sh
+# Copyright 2023 Thomas de Grivel
+
+set -e
+
+# Config
+SHPKG_DIR=${SHPKG_DIR:-~/shpkg}
+
+# SHPKG
+. ${SHPKG_DIR}/lib/shpkg.subr
+
+# CLI
+if [ "x$1" = "xclone" ] ||
+   [ "x$1" = "xc" ]; then
+    shift
+    exec repo_install "$@"
+elif [ "x$1" = "xinstall" ] ||
+     [ "x$1" = "xi" ]; then
+    shift
+    exec install "$@"
+elif [ "x$1" = "xremove" ] ||
+     [ "x$1" = "xr" ]; then
+    shift
+    exec remove "$@"
+elif [ "x$1" = "xupdate" ] ||
+     [ "x$1" = "xu" ]; then
+    shift
+    exec update "$@"
+fi
+
+echo "Usage: $0 (clone|fetch|pull) PKG ..." >&2
+exit 1
