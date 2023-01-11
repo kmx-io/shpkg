@@ -48,5 +48,26 @@ elif [ "x$1" = "xupgrade" ]; then
     exit
 fi
 
-echo "Usage: $0 (clone|fetch|pull|remove) PKG ..." >&2
+echo "Usage: shpkg OPERATION PKG ...
+
+Source directory operations :
+ clone          shortcut for git clone
+ fetch          shortcut for git fetch
+ pull           shortcut for git pull
+ remove | rm    shortcut for uninstall and rm -rf repo
+
+Compilation operations :
+ autogen        shortcut for ./autogen
+ configure      shortcut for ./configure
+ clean          shortcut for make clean
+ build          shortcut for make
+
+Package operations :
+ fake           install compiled sources into fake directory
+ package        build package from sources
+ install        install package
+ upgrade        pull sources, build package and install
+ uninstall      uninstall package
+" >&2
+
 exit 1
