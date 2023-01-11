@@ -11,41 +11,131 @@ if ! [ -d "$SHPKG_SRC_DIR" ]; then
 fi
 
 # Repo
-REPO_INDEX="${SHPKG_DIR}/repo_index"
-if ! [ -f "$REPO_INDEX" ]; then
-    echo "$REPO_INDEX: not found" >&2
+SHPKG_REPO_INDEX="${SHPKG_DIR}/repo_index"
+if ! [ -f "$SHPKG_REPO_INDEX" ]; then
+    echo "$SHPKG_REPO_INDEX: not found" >&2
     exit 1
 fi
 
-# Repo routines
-repo_dir () {
-    repo_find "$@" | cut -d ' ' -f 2
+shpkg_src_dir () {
+    shpkg_get "$@" | cut -d ' ' -f 2
 }
 
-repo_find () {
+shpkg_get () {
     [ "x$#" = "x1" ] || return 1
-    grep "^$1 " "${REPO_INDEX}"
+    grep "^$1 " "${SHPKG_REPO_INDEX}"
 }
 
-repo_git_url () {
-    repo_find "$@" | cut -d ' ' -f 3
+shpkg_git_url () {
+    shpkg_get "$@" | cut -d ' ' -f 3
 }
 
-repo_install () {
+shpkg_clone () {
     for REPO; do
-        REPO_DIR="$(repo_dir "$REPO")"
-        REPO_PARENT_DIR="$(repo_parent_dir "$REPO")"
-        REPO_GIT_URL="$(repo_git_url "$REPO")"
-        REPO_BASENAME="$(basename "$REPO_DIR")"
-        if ! [ -d "$REPO_DIR" ]; then
-            mkdir -p "${SHPKG_SRC_DIR}/$REPO_PARENT_DIR"
-            ( cd "${SHPKG_SRC_DIR}/$REPO_PARENT_DIR" &&
-                  git clone "$REPO_GIT_URL" "$REPO_BASENAME"
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        SHPKG_REPO_PARENT_DIR="$(shpkg_src_parent_dir "$REPO")"
+        SHPKG_REPO_GIT_URL="$(shpkg_git_url "$REPO")"
+        SHPKG_REPO_BASENAME="$(basename "$SHPKG_REPO_SRC_DIR")"
+        if ! [ -d "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" ]; then
+            verbose mkdir -p "${SHPKG_SRC_DIR}/$SHPKG_REPO_PARENT_DIR"
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_PARENT_DIR" &&
+                  verbose git clone "$SHPKG_REPO_GIT_URL" \
+                          "$SHPKG_REPO_BASENAME" &&
+                  cd "$SHPKG_REPO_BASENAME" &&
+                  verbose git submodule init &&
+                  verbose git submodule update
             )
         fi
     done
 }
 
-repo_parent_dir () {
-    dirname "$(repo_dir "$REPO")"
+shpkg_fetch () {
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+              verbose git fetch
+        )
+    done
+}
+
+shpkg_pull () {
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+              verbose git pull
+        )
+    done
+}
+
+shpkg_src_parent_dir () {
+    dirname "$(shpkg_src_dir "$REPO")"
+}
+
+shpkg_remove () {
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        SHPKG_REPO_PARENT_DIR="$(shpkg_src_parent_dir "$REPO")"
+        verbose rm -rf "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR"
+        rmdir "${SHPKG_SRC_DIR}/$SHPKG_REPO_PARENT_DIR" 2>/dev/null || true
+    done
+}
+
+# Building from sources
+shpkg_build () {
+    shpkg_configure "$@"
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        if [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+                  verbose make; )
+        fi
+    done
+}
+
+shpkg_configure () {
+    shpkg_clone "$@"
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        if [ -x "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/configure" ]; then
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+                  verbose ./configure --prefix "$SHPKG_DIR"; )
+        elif [ -x "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/configure.sh" ]; then
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+                  verbose ./configure.sh --prefix "$SHPKG_DIR"; )
+        fi
+    done
+}
+
+# misc
+
+shpkg_install () {
+    shpkg_build "$@"
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        if [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+                  verbose make install; )
+        fi
+    done
+}
+
+shpkg_uninstall () {
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        if [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+                  verbose make uninstall; )
+        fi
+    done
+}
+
+shpkg_upgrade () {
+    verbose shpkg_pull "$@"
+    verbose shpkg_build "$@"
+    verbose shpkg_install "$@"
+}
+
+verbose () {
+    echo "$@"
+    "$@"
 }
