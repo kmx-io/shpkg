@@ -4,31 +4,59 @@
 set -e
 
 # Config
-SHPKG_DIR="${SHPKG_DIR:-~/shpkg}"
-SHPKG_SRC_DIR="${SHPKG_SRC_DIR:-${SHPKG_DIR}/src}"
+SHPKG_DIR="${SHPKG_DIR:-${HOME}/shpkg}"
+if [ "x$CC" = "x" ]; then
+    if which cc; then
+        CC=cc
+    elif which gcc; then
+        CC=gcc
+    elif which egcc; then
+        CC=egcc
+    else
+        echo "C compiler not found." >&2
+        exit 1
+    fi
+fi
+SHPKG_PREFIX="$SHPKG_DIR"
+SHPKG_TARGET="$(${CC} -v 2>&1 | grep '^Target: ' | head -n 1 | cut -c 9-)"
+SHPKG_TARGET_DIR="${SHPKG_DIR}/target/${SHPKG_TARGET}"
+SHPKG_FAKE_DIR="${SHPKG_TARGET_DIR}/fake"
+SHPKG_INCLUDE_DIR="${SHPKG_DIR}/include"
+SHPKG_LIB_DIR="${SHPKG_DIR}/lib"
+SHPKG_OBJ_DIR="${SHPKG_TARGET_DIR}/obj"
+SHPKG_PACKAGE_DIR="${SHPKG_TARGET_DIR}/packages"
+SHPKG_SRC_DIR="${SHPKG_DIR}/src"
+SHPKG_VAR_DB_DIR="${SHPKG_DIR}/var/db/shpkg"
+
+export CPPFLAGS="$CPPFLAGS -I${SHPKG_INCLUDE_DIR}"
+export LDFLAGS="$LDFLAGS -L${SHPKG_LIB_DIR}"
+export PKG_CONFIG_PATH="${SHPKG_LIB_DIR}/pkgconfig"
+
+verbose () {
+    echo "$@"
+    "$@"
+}
+
+# Setup
+if ! [ -d "$SHPKG_FAKE_DIR" ]; then
+    verbose mkdir -p "$SHPKG_FAKE_DIR"
+fi
+if ! [ -d "$SHPKG_PACKAGE_DIR" ]; then
+    verbose mkdir -p "$SHPKG_PACKAGE_DIR"
+fi
 if ! [ -d "$SHPKG_SRC_DIR" ]; then
-    mkdir -p "$SHPKG_SRC_DIR"
+    verbose mkdir -p "$SHPKG_SRC_DIR"
+fi
+if ! [ -d "$SHPKG_VAR_DB_DIR" ]; then
+    verbose mkdir -p "$SHPKG_VAR_DB_DIR"
 fi
 
-# Repo
+# Source repository
 SHPKG_REPO_INDEX="${SHPKG_DIR}/repo_index"
 if ! [ -f "$SHPKG_REPO_INDEX" ]; then
     echo "$SHPKG_REPO_INDEX: not found" >&2
     exit 1
 fi
-
-shpkg_src_dir () {
-    shpkg_get "$@" | cut -d ' ' -f 2
-}
-
-shpkg_get () {
-    [ "x$#" = "x1" ] || return 1
-    grep "^$1 " "${SHPKG_REPO_INDEX}"
-}
-
-shpkg_git_url () {
-    shpkg_get "$@" | cut -d ' ' -f 3
-}
 
 shpkg_clone () {
     for REPO; do
@@ -49,6 +77,10 @@ shpkg_clone () {
     done
 }
 
+shpkg_depends_on () {
+    shpkg_repo_info "$@" | cut -d ' ' -f 4 | tr ',' ' '
+}
+
 shpkg_fetch () {
     for REPO; do
         SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
@@ -58,17 +90,21 @@ shpkg_fetch () {
     done
 }
 
+shpkg_repo_info () {
+    [ "x$#" = "x1" ] || return 1
+    grep "^$1 " "${SHPKG_REPO_INDEX}"
+}
+
+shpkg_git_url () {
+    shpkg_repo_info "$@" | cut -d ' ' -f 3
+}
+
 shpkg_pull () {
     for REPO; do
         SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
         ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
-              verbose git pull
-        )
+              verbose git pull; )
     done
-}
-
-shpkg_src_parent_dir () {
-    dirname "$(shpkg_src_dir "$REPO")"
 }
 
 shpkg_remove () {
@@ -80,62 +116,141 @@ shpkg_remove () {
     done
 }
 
+shpkg_src_dir () {
+    shpkg_repo_info "$@" | cut -d ' ' -f 2
+}
+
+shpkg_src_parent_dir () {
+    dirname "$(shpkg_src_dir "$REPO")"
+}
+
+shpkg_version () {
+    SHPKG_REPO_HASH="$(git show-ref --head HEAD | cut -d ' ' -f 1)"
+    SHPKG_REPO_HEAD="$(git show-ref | grep "$SHPKG_REPO_HASH" | grep ' refs/heads/' | sed -e 's,^.* refs/heads/,,')"
+    echo "${SHPKG_REPO_HEAD}-${SHPKG_REPO_HASH}"
+}
+
 # Building from sources
+shpkg_autogen () {
+    verbose shpkg_clone "$@"
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        if [ -x "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/autogen" ]; then
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+                  verbose ./autogen; )
+        elif [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/autogen.sh" ]; then
+            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
+                  verbose sh autogen.sh; )
+        fi
+    done
+}
+
 shpkg_build () {
-    shpkg_configure "$@"
+    verbose shpkg_configure "$@"
     for REPO; do
         SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
         if [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
             ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
                   verbose make; )
+        elif [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/CMakeLists.txt" ]; then
+            cmake --build "${SHPKG_OBJ_DIR}/${SHPKG_REPO_SRC_DIR}"
         fi
     done
 }
 
 shpkg_configure () {
-    shpkg_clone "$@"
+    verbose shpkg_autogen "$@"
     for REPO; do
         SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "$REPO")"
+        if ! [ -d "$SHPKG_REPO_FAKE_DIR" ]; then
+            verbose mkdir -p "$SHPKG_REPO_FAKE_DIR"
+        fi
         if [ -x "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/configure" ]; then
             ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
-                  verbose ./configure --prefix "$SHPKG_DIR"; )
+                  verbose ./configure --prefix "$SHPKG_PREFIX"; )
         elif [ -x "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/configure.sh" ]; then
             ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
-                  verbose ./configure.sh --prefix "$SHPKG_DIR"; )
+                  verbose ./configure.sh --prefix "$SHPKG_PREFIX"; )
+        elif [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/CMakeLists.txt" ]; then
+            cmake -S "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}" -B "${SHPKG_OBJ_DIR}/${SHPKG_REPO_SRC_DIR}" -D CMAKE_INSTALL_PREFIX:PATH="$SHPKG_PREFIX" -D BUILD_SHARED_LIBS=ON
         fi
     done
 }
 
-# misc
-
-shpkg_install () {
+shpkg_fake () {
     shpkg_build "$@"
     for REPO; do
         SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "$REPO")"
+        if ! [ -d "$SHPKG_REPO_FAKE_DIR" ]; then
+            verbose mkdir -p "$SHPKG_REPO_FAKE_DIR"
+        fi
         if [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
             ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
-                  verbose make install; )
+                  verbose make PREFIX="$SHPKG_REPO_FAKE_DIR" install; )
+        elif [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/CMakeLists.txt" ]; then
+            cmake --install "${SHPKG_OBJ_DIR}/${SHPKG_REPO_SRC_DIR}" --prefix "${SHPKG_REPO_FAKE_DIR}"
+        fi
+    done
+}
+
+shpkg_fake_dir () {
+    echo "${SHPKG_FAKE_DIR}/$(shpkg_src_dir "$REPO")"
+}
+
+shpkg_package () {
+    shpkg_fake "$@"
+    for REPO; do
+        SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "$REPO")"
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        SHPKG_REPO_VERSION="$(shpkg_version "$REPO")"
+        SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_SRC_DIR}-${SHPKG_REPO_VERSION}.tgz"
+        SHPKG_REPO_PACKAGE_DIR="$(dirname "$SHPKG_REPO_PACKAGE")"
+        if ! [ -d "$SHPKG_REPO_PACKAGE_DIR" ]; then
+            verbose mkdir -p "$SHPKG_REPO_PACKAGE_DIR"
+        fi
+        if ! [ -d "$SHPKG_REPO_FAKE_DIR" ]; then
+            verbose mkdir -p "$SHPKG_REPO_FAKE_DIR"
+        fi
+        ( verbose cd "$SHPKG_REPO_FAKE_DIR" &&
+          echo "pax -wz . > $SHPKG_REPO_PACKAGE" &&
+          pax -wz . > "$SHPKG_REPO_PACKAGE" )
+    done
+}
+    
+# Packages
+shpkg_install () {
+    verbose shpkg_install_dependencies "$@"
+    shpkg_build "$@"
+    shpkg_package "$@"
+    for REPO; do
+        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
+        SHPKG_REPO_VERSION="$(shpkg_version "$REPO")"
+        SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_SRC_DIR}-${SHPKG_REPO_VERSION}.tgz"
+        ( verbose cd "$SHPKG_DIR" &&
+              verbose pax -rz < "$SHPKG_REPO_PACKAGE"; )
+    done
+}
+
+shpkg_install_dependencies () {
+    for REPO; do
+        SHPKG_REPO_DEPENDS_ON="$(shpkg_depends_on "$REPO")"
+        if [ "x$SHPKG_REPO_DEPENDS_ON" != "x" ]; then
+            shpkg_install $SHPKG_REPO_DEPENDS_ON
         fi
     done
 }
 
 shpkg_uninstall () {
     for REPO; do
-        SHPKG_REPO_SRC_DIR="$(shpkg_src_dir "$REPO")"
-        if [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
-            ( verbose cd "${SHPKG_SRC_DIR}/$SHPKG_REPO_SRC_DIR" &&
-                  verbose make uninstall; )
-        fi
+        :
     done
 }
 
 shpkg_upgrade () {
     verbose shpkg_pull "$@"
     verbose shpkg_build "$@"
+    verbose shpkg_package "$@"
     verbose shpkg_install "$@"
-}
-
-verbose () {
-    echo "$@"
-    "$@"
 }

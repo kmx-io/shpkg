@@ -10,13 +10,21 @@ SHPKG_DIR=${SHPKG_DIR:-~/shpkg}
 . ${SHPKG_DIR}/lib/shpkg.subr
 
 # CLI
-if [ "x$1" = "xclone" ]; then
+if [ "x$1" = "xbuild" ]; then
+    shift
+    verbose shpkg_build "$@"
+    exit
+elif [ "x$1" = "xclone" ]; then
     shift
     verbose shpkg_clone "$@"
     exit
 elif [ "x$1" = "xconfigure" ]; then
     shift
     verbose shpkg_configure "$@"
+    exit
+elif [ "x$1" = "xfake" ]; then
+    shift
+    verbose shpkg_fake "$@"
     exit
 elif [ "x$1" = "xfetch" ] ||
      [ "x$1" = "xf" ]; then
@@ -27,6 +35,11 @@ elif [ "x$1" = "xinstall" ] ||
      [ "x$1" = "xi" ]; then
     shift
     verbose shpkg_install "$@"
+    exit
+elif [ "x$1" = "xpackage" ] ||
+     [ "x$1" = "xpkg" ]; then
+    shift
+    verbose shpkg_package "$@"
     exit
 elif [ "x$1" = "xpull" ] ||
      [ "x$1" = "xp" ]; then
