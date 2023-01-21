@@ -5,3 +5,4 @@ libbsd freedesktop.org/libbsd https://gitlab.freedesktop.org/libbsd/libbsd.git
 libmd hadrons.org/libmd https://git.hadrons.org/git/libmd.git
 pkg-config freedesktop.org/pkg-config https://gitlab.freedesktop.org/pkg-config/pkg-config.git
 rtbuf rtbuf/rtbuf https://git.kmx.io/rtbuf/rtbuf.git glfw3
+shpkg kmx.io/shpkg https://git.kmx.io/kmx.io/shpkg.git
