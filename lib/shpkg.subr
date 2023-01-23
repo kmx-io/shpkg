@@ -128,9 +128,13 @@ shpkg_src_parent_dir () {
 shpkg_version () {
     SHPKG_REPO_DIR="$(shpkg_dir "$1")"
     SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
-    SHPKG_REPO_HASH="$(git -C "${SHPKG_REPO_SRC_DIR}" show-ref --head HEAD | cut -d ' ' -f 1 | head -n 1)"
-    SHPKG_REPO_HEAD="$(git -C "${SHPKG_REPO_SRC_DIR}" show-ref | grep "${SHPKG_REPO_HASH}" | grep ' refs/heads/' | sed -e 's,^.* refs/heads/,,')"
-    echo "${SHPKG_REPO_HEAD}-${SHPKG_REPO_HASH}"
+    if [ -d "${SHPKG_REPO_SRC_DIR}/.git" ]; then
+        SHPKG_REPO_HASH="$(git -C "${SHPKG_REPO_SRC_DIR}" show-ref --head HEAD | cut -d ' ' -f 1 | head -n 1)"
+        SHPKG_REPO_HEAD="$(git -C "${SHPKG_REPO_SRC_DIR}" show-ref | grep "${SHPKG_REPO_HASH}" | grep ' refs/heads/' | sed -e 's,^.* refs/heads/,,')"
+        echo "${SHPKG_REPO_HEAD}-${SHPKG_REPO_HASH}"
+        return 0
+    fi
+    return 1
 }
 
 # Building from sources
