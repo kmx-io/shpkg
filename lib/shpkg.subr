@@ -172,8 +172,8 @@ shpkg_build () {
 		mkdir -p "${SHPKG_REPO_TAG_DIR}"
 	    fi
 	    DATE="$(date +%F\ %T)"
-	    echo "echo ${DATE} > ${SHPKG_REPO_TAG_DIR/build-done}"
-	    echo "${DATE}" > "${SHPKG_REPO_TAG_DIR/build-done}"
+	    echo "echo ${DATE} > ${SHPKG_REPO_TAG_DIR}/build-done}"
+	    echo "${DATE}" > "${SHPKG_REPO_TAG_DIR}/build-done}"
 	fi
     done
 }
