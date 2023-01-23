@@ -251,6 +251,7 @@ shpkg__tag_is_absent() {
 }
 
 shpkg__tag_write() {
+    SHPKG_REPO_TAG_DIR="${SHPKG_TAG_DIR}/${SHPKG_REPO_DIR}/${SHPKG_REPO_VERSION}"
     DATE="$(date +%F\ %T)"
     if ! [ -d "${SHPKG_REPO_TAG_DIR}" ]; then
         verbose mkdir -p "${SHPKG_REPO_TAG_DIR}"
