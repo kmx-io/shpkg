@@ -161,6 +161,7 @@ shpkg_build () {
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
 	if shpkg__tag_is_absent build-done; then
 	    ( verbose shpkg_configure "${REPO}"; )
+            SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             if [ -f "${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
 		( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
                       verbose make; )
@@ -177,8 +178,10 @@ shpkg_configure () {
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
         SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "${REPO}")"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
+        SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
 	if shpkg__tag_is_absent configure-done; then
             ( verbose shpkg_autogen "${REPO}"; )
+            SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             if ! [ -d "${SHPKG_REPO_FAKE_DIR}" ]; then
                 verbose mkdir -p "${SHPKG_REPO_FAKE_DIR}"
             fi
