@@ -6,11 +6,11 @@ set -e
 # Config
 SHPKG_DIR="${SHPKG_DIR:-${HOME}/shpkg}"
 if [ "x${CC}" = "x" ]; then
-    if which cc; then
+    if which cc >/dev/null; then
         CC=cc
-    elif which gcc; then
+    elif which gcc >/dev/null; then
         CC=gcc
-    elif which egcc; then
+    elif which egcc >/dev/null; then
         CC=egcc
     else
         echo "C compiler not found." >&2
