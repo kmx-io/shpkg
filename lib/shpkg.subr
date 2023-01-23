@@ -159,7 +159,7 @@ shpkg_build () {
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
         SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
-	if ! shpkg__tag_is_absent build-done; then
+	if shpkg__tag_is_absent build-done; then
 	    ( verbose shpkg_configure "${REPO}"; )
             if [ -f "${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
 		( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
