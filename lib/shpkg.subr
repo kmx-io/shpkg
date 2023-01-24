@@ -228,11 +228,13 @@ shpkg_package () {
         SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
         SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
 	if ! [ -f "${SHPKG_REPO_PACKAGE}" ]; then
-            SHPKG_REPO_PACKAGE_DIR="$(dirname "${SHPKG_REPO_PACKAGE}")"
             SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "${REPO}")"
 	    verbose shpkg_fake "${REPO}"
-            if ! [ -d "${SHPKG_REPO_PACKAGE}_DIR" ]; then
-		verbose mkdir -p "${SHPKG_REPO_PACKAGE}_DIR"
+            SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
+            SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
+            SHPKG_REPO_PACKAGE_DIR="$(dirname "${SHPKG_REPO_PACKAGE}")"
+            if ! [ -d "${SHPKG_REPO_PACKAGE_DIR}" ]; then
+		verbose mkdir -p "${SHPKG_REPO_PACKAGE_DIR}"
             fi
             if ! [ -d "${SHPKG_REPO_FAKE_DIR}" ]; then
 		verbose mkdir -p "${SHPKG_REPO_FAKE_DIR}"
