@@ -276,6 +276,8 @@ shpkg_install () {
 	    ( verbose shpkg_install_dependencies "${REPO}"; )
 	    ( verbose shpkg_build "${REPO}"; )
 	    ( verbose shpkg_package "${REPO}"; )
+            SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
+            SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
             ( verbose cd "${SHPKG_DIR}" &&
 		  echo "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
 		  pax -rdz < "${SHPKG_REPO_PACKAGE}"; )
