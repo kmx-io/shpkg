@@ -29,6 +29,15 @@ SHPKG_SRC_DIR="${SHPKG_DIR}/src"
 SHPKG_TAG_DIR="${SHPKG_TARGET_DIR}/tag"
 SHPKG_VAR_DB_DIR="${SHPKG_DIR}/var/db/shpkg"
 
+if which sha256 >/dev/null; then
+    SHPKG_SHA256=sha256
+elif which sha256sum >/dev/null; then
+    SHPKG_SHA256=sha256sum
+else
+    echo "sha256 executable not found" >&2
+    exit 1
+fi
+
 export CPPFLAGS="${CPPFLAGS} -I${SHPKG_INCLUDE_DIR}"
 export LDFLAGS="${LDFLAGS} -L${SHPKG_LIB_DIR}"
 export PKG_CONFIG_PATH="${SHPKG_LIB_DIR}/pkgconfig"
@@ -51,6 +60,19 @@ fi
 if ! [ -d "${SHPKG_VAR_DB_DIR}" ]; then
     verbose mkdir -p "${SHPKG_VAR_DB_DIR}"
 fi
+
+# SHA256
+shpkg_sha256 () {
+    sha256 "$@"
+}
+
+shpkg_sha256sum () {
+    for F; do
+        echo -n "SHA256 ($F) = "
+        sha256sum "$F" | cut -d ' ' -f 1
+    done
+}
+
 
 # Source repository
 SHPKG_REPO_INDEX="${SHPKG_DIR}/repo_index"
@@ -173,6 +195,12 @@ shpkg_build () {
     done
 }
 
+shpkg_checksum () {
+    find . -type f | cut -c 3- | while read F; do
+        "shpkg_${SHPKG_SHA256}" "$F"
+    done
+}
+
 shpkg_configure () {
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
@@ -232,14 +260,14 @@ shpkg_package () {
 	    verbose shpkg_fake "${REPO}"
             SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
+            SHPKG_REPO_PACKAGE_CHECKSUM="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.SHA256"
             SHPKG_REPO_PACKAGE_DIR="$(dirname "${SHPKG_REPO_PACKAGE}")"
             if ! [ -d "${SHPKG_REPO_PACKAGE_DIR}" ]; then
 		verbose mkdir -p "${SHPKG_REPO_PACKAGE_DIR}"
             fi
-            if ! [ -d "${SHPKG_REPO_FAKE_DIR}" ]; then
-		verbose mkdir -p "${SHPKG_REPO_FAKE_DIR}"
-            fi
             ( verbose cd "${SHPKG_REPO_FAKE_DIR}" &&
+                  echo "shpkg_checksum > ${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
+                  shpkg_checksum > "${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
 		  echo "pax -wz . > ${SHPKG_REPO_PACKAGE}" &&
 		  pax -wz . > "${SHPKG_REPO_PACKAGE}" )
 	fi
@@ -278,6 +306,7 @@ shpkg_install () {
 	    ( verbose shpkg_package "${REPO}"; )
             SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
+            SHPKG_REPO_PACKAGE_CHECKSUM="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.SHA256"
             ( verbose cd "${SHPKG_DIR}" &&
 		  echo "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
 		  pax -rdz < "${SHPKG_REPO_PACKAGE}"; )
@@ -286,7 +315,8 @@ shpkg_install () {
 	    fi
 	    echo "echo Version: ${SHPKG_REPO_VERSION} > ${SHPKG_REPO_INSTALLED}"
 	    echo "Version: ${SHPKG_REPO_VERSION}" > "${SHPKG_REPO_INSTALLED}"
-            cat  > "${SHPKG_REPO_INSTALLED}"
+            echo "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
+            cat "${SHPKG_REPO_PACKAGE_CHECKSUM}" >> "${SHPKG_REPO_INSTALLED}"
 	fi
     done
 }
