@@ -239,7 +239,7 @@ shpkg_fake () {
         verbose mkdir -p "${SHPKG_REPO_FAKE_DIR}"
         if [ -f "${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
             ( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
-                  verbose make DESTDIR="${SHPKG_REPO_FAKE_DIR}" install; )
+                  verbose make PREFIX= DESTDIR="${SHPKG_REPO_FAKE_DIR}" install; )
         elif [ -f "${SHPKG_REPO_SRC_DIR}/CMakeLists.txt" ]; then
             cmake --install "${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}" --prefix "${SHPKG_REPO_FAKE_DIR}"
         fi
