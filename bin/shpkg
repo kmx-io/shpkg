@@ -53,6 +53,10 @@ elif [ "x$1" = "xremove" ] ||
     verbose shpkg_uninstall "$@"
     verbose shpkg_remove "$@"
     exit
+elif [ "x$1" = "xuninstall" ]; then
+    shift
+    verbose shpkg_uninstall "$@"
+    exit
 elif [ "x$1" = "xupdate" ]; then
     verbose shpkg_update
     exit

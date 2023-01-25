@@ -349,7 +349,21 @@ shpkg_install_dependencies () {
 # TODO: remove metadata about installed packages
 shpkg_uninstall () {
     for REPO; do
-        :
+        SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
+	SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
+        if [ -f "${SHPKG_REPO_INSTALLED}" ]; then
+            verbose cd "${SHPKG_DIR}"
+            grep -v : "${SHPKG_REPO_INSTALLED}" |
+                cut -d '(' -f 2 |
+                cut -d ')' -f 1 |
+                while read F; do
+                    if grep -E "^SHA256 \\($F\\) = " "${SHPKG_REPO_INSTALLED}" |
+                            "${SHPKG_SHA256}" -c; then
+                        verbose rm "$F"
+                    fi
+                done
+            verbose rm "${SHPKG_REPO_INSTALLED}"
+        fi
     done
 }
 
