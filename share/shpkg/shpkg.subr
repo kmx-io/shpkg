@@ -5,6 +5,7 @@ set -e
 
 # Config
 SHPKG_DIR="${SHPKG_DIR:-${HOME}/shpkg}"
+
 if [ "x${CC}" = "x" ]; then
     if which cc >/dev/null; then
         CC=cc
@@ -17,17 +18,8 @@ if [ "x${CC}" = "x" ]; then
         exit 1
     fi
 fi
+
 SHPKG_PREFIX="${SHPKG_DIR}"
-SHPKG_TARGET="$(${CC} -v 2>&1 | grep '^Target: ' | head -n 1 | cut -c 9-)"
-SHPKG_TARGET_DIR="${SHPKG_DIR}/target/${SHPKG_TARGET}"
-SHPKG_FAKE_DIR="${SHPKG_TARGET_DIR}/fake"
-SHPKG_INCLUDE_DIR="${SHPKG_DIR}/include"
-SHPKG_LIB_DIR="${SHPKG_DIR}/lib"
-SHPKG_OBJ_DIR="${SHPKG_TARGET_DIR}/obj"
-SHPKG_PACKAGE_DIR="${SHPKG_TARGET_DIR}/packages"
-SHPKG_SRC_DIR="${SHPKG_DIR}/src"
-SHPKG_TAG_DIR="${SHPKG_TARGET_DIR}/tag"
-SHPKG_VAR_DB_DIR="${SHPKG_DIR}/var/db/shpkg"
 
 if which sha256 >/dev/null; then
     SHPKG_SHA256=sha256
@@ -37,6 +29,22 @@ else
     echo "sha256 executable not found" >&2
     exit 1
 fi
+
+SHPKG_TARGET="$(${CC} -v 2>&1 | grep '^Target: ' | head -n 1 | cut -c 9-)"
+
+SHPKG_ETC_DIR="${SHPKG_DIR}/etc/shpkg"
+SHPKG_INCLUDE_DIR="${SHPKG_DIR}/include"
+SHPKG_LIB_DIR="${SHPKG_DIR}/lib"
+SHPKG_SHARE_DIR="${SHPKG_DIR}/share/shpkg"
+SHPKG_SRC_DIR="${SHPKG_DIR}/src"
+SHPKG_TARGET_DIR="${SHPKG_DIR}/target/${SHPKG_TARGET}"
+SHPKG_VAR_DB_DIR="${SHPKG_DIR}/var/db/shpkg"
+
+SHPKG_FAKE_DIR="${SHPKG_TARGET_DIR}/fake"
+SHPKG_OBJ_DIR="${SHPKG_TARGET_DIR}/obj"
+SHPKG_OS_DIR="${SHPKG_SHARE_DIR}/share/shpkg"
+SHPKG_PACKAGE_DIR="${SHPKG_TARGET_DIR}/packages"
+SHPKG_TAG_DIR="${SHPKG_TARGET_DIR}/tag"
 
 export CPPFLAGS="${CPPFLAGS} -I${SHPKG_INCLUDE_DIR}"
 export LDFLAGS="${LDFLAGS} -L${SHPKG_LIB_DIR}"
@@ -75,7 +83,7 @@ shpkg_sha256sum () {
 
 
 # Source repository
-SHPKG_REPO_INDEX="${SHPKG_DIR}/repo_index"
+SHPKG_REPO_INDEX="${SHPKG_SHARE_DIR}/repo_index"
 if ! [ -f "${SHPKG_REPO_INDEX}" ]; then
     echo "${SHPKG_REPO_INDEX}: not found" >&2
     exit 1
