@@ -19,6 +19,11 @@ if [ "x${CC}" = "x" ]; then
     fi
 fi
 
+SHPKG_OS="$(uname)"
+if [ "x${SHPKG_OS}" = "xLinux" ]; then
+    SHPKG_OS="${SHPKG_OS}/$(uname -v | grep -io -e Debian -e Gentoo -e Ubuntu)"
+fi
+
 SHPKG_PREFIX="${SHPKG_DIR}"
 
 if which sha256 >/dev/null; then
@@ -42,7 +47,7 @@ SHPKG_VAR_DB_DIR="${SHPKG_DIR}/var/db/shpkg"
 
 SHPKG_FAKE_DIR="${SHPKG_TARGET_DIR}/fake"
 SHPKG_OBJ_DIR="${SHPKG_TARGET_DIR}/obj"
-SHPKG_OS_DIR="${SHPKG_SHARE_DIR}/$(uname)"
+SHPKG_OS_DIR="${SHPKG_SHARE_DIR}/${SHPKG_OS}"
 SHPKG_PACKAGE_DIR="${SHPKG_TARGET_DIR}/packages"
 SHPKG_TAG_DIR="${SHPKG_TARGET_DIR}/tag"
 
