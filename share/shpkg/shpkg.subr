@@ -302,30 +302,32 @@ shpkg__tag_write() {
 shpkg_install () {
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
-        SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
-        SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
-	SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
-	SHPKG_REPO_INSTALLED_DIR="$(dirname "${SHPKG_REPO_INSTALLED}")"
-	if ! [ -f "${SHPKG_REPO_INSTALLED}" ] ||
-		! head -n 1 < "${SHPKG_REPO_INSTALLED}" |
-		    grep "Version: ${SHPKG_REPO_VERSION}" >/dev/null; then
-	    ( verbose shpkg_install_dependencies "${REPO}"; )
-	    ( verbose shpkg_build "${REPO}"; )
-	    ( verbose shpkg_package "${REPO}"; )
+        if ! grep -Eq "^${SHPKG_REPO_DIR}\$" "${SHPKG_OS_DIR}/system_packages"; then
             SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
-            SHPKG_REPO_PACKAGE_CHECKSUM="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.SHA256"
-            ( verbose cd "${SHPKG_DIR}" &&
-		  echo "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
-		  pax -rdz < "${SHPKG_REPO_PACKAGE}"; )
-	    if ! [ -d "${SHPKG_REPO_INSTALLED_DIR}" ]; then
-		verbose mkdir -p "${SHPKG_REPO_INSTALLED_DIR}"
+	    SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
+	    SHPKG_REPO_INSTALLED_DIR="$(dirname "${SHPKG_REPO_INSTALLED}")"
+	    if ! [ -f "${SHPKG_REPO_INSTALLED}" ] ||
+		    ! head -n 1 < "${SHPKG_REPO_INSTALLED}" |
+		        grep "Version: ${SHPKG_REPO_VERSION}" >/dev/null; then
+	        ( verbose shpkg_install_dependencies "${REPO}"; )
+	        ( verbose shpkg_build "${REPO}"; )
+	        ( verbose shpkg_package "${REPO}"; )
+                SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
+                SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
+                SHPKG_REPO_PACKAGE_CHECKSUM="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.SHA256"
+                ( verbose cd "${SHPKG_DIR}" &&
+		      echo "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
+		      pax -rdz < "${SHPKG_REPO_PACKAGE}"; )
+	        if ! [ -d "${SHPKG_REPO_INSTALLED_DIR}" ]; then
+		    verbose mkdir -p "${SHPKG_REPO_INSTALLED_DIR}"
+	        fi
+	        echo "echo Version: ${SHPKG_REPO_VERSION} > ${SHPKG_REPO_INSTALLED}"
+	        echo "Version: ${SHPKG_REPO_VERSION}" > "${SHPKG_REPO_INSTALLED}"
+                echo "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
+                cat "${SHPKG_REPO_PACKAGE_CHECKSUM}" >> "${SHPKG_REPO_INSTALLED}"
 	    fi
-	    echo "echo Version: ${SHPKG_REPO_VERSION} > ${SHPKG_REPO_INSTALLED}"
-	    echo "Version: ${SHPKG_REPO_VERSION}" > "${SHPKG_REPO_INSTALLED}"
-            echo "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
-            cat "${SHPKG_REPO_PACKAGE_CHECKSUM}" >> "${SHPKG_REPO_INSTALLED}"
-	fi
+        fi
     done
 }
 
