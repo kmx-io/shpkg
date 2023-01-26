@@ -56,9 +56,9 @@ export LDFLAGS="${LDFLAGS} -L${SHPKG_LIB_DIR}"
 export PKG_CONFIG_PATH="${SHPKG_LIB_DIR}/pkgconfig"
 
 verbose () {
-    echo -ne "\e[104m"
+    echo -e -n "\e[104m"
     echo "$@"
-    echo -ne "\e[0m"
+    echo -e -n "\e[0m"
     "$@"
 }
 
