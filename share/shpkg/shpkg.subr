@@ -14,8 +14,7 @@ if [ "x${CC}" = "x" ]; then
     elif which egcc >/dev/null; then
         CC=egcc
     else
-        echo "C compiler not found." >&2
-        exit 1
+        err 1 "C compiler not found."
     fi
 fi
 
@@ -31,8 +30,7 @@ if which sha256 >/dev/null; then
 elif which sha256sum >/dev/null; then
     SHPKG_SHA256=sha256sum
 else
-    echo "sha256 executable not found" >&2
-    exit 1
+    err 1 "sha256 executable not found"
 fi
 
 SHPKG_TARGET="$(${CC} -v 2>&1 | grep '^Target: ' | head -n 1 | cut -c 9-)"
@@ -55,10 +53,23 @@ export CPPFLAGS="${CPPFLAGS} -I${SHPKG_INCLUDE_DIR}"
 export LDFLAGS="${LDFLAGS} -L${SHPKG_LIB_DIR}"
 export PKG_CONFIG_PATH="${SHPKG_LIB_DIR}/pkgconfig"
 
-verbose () {
+puts() {
     printf '\e[0;34m'
     echo -n "$@"
     printf '\e[0m\n'
+}
+
+err() {
+    R="$1"
+    shift
+    printf '\e[0;31m' >&2
+    echo -n "$0:" error: "$@" >&2
+    printf '\e[0m\n' >&2
+    exit "$R"
+}
+
+verbose() {
+    puts "$@"
     "$@"
 }
 
@@ -92,8 +103,7 @@ shpkg_sha256sum () {
 # Source repository
 SHPKG_REPO_INDEX="${SHPKG_SHARE_DIR}/repo_index"
 if ! [ -f "${SHPKG_REPO_INDEX}" ]; then
-    echo "${SHPKG_REPO_INDEX}: not found" >&2
-    exit 1
+    err 1 "${SHPKG_REPO_INDEX}: not found"
 fi
 
 shpkg_clone () {
@@ -281,9 +291,9 @@ shpkg_package () {
 		verbose mkdir -p "${SHPKG_REPO_PACKAGE_DIR}"
             fi
             ( verbose cd "${SHPKG_REPO_FAKE_DIR}" &&
-                  echo "shpkg_checksum > ${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
+                  puts "shpkg_checksum > ${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
                   shpkg_checksum > "${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
-		  echo "pax -wz . > ${SHPKG_REPO_PACKAGE}" &&
+		  puts "pax -wz . > ${SHPKG_REPO_PACKAGE}" &&
 		  pax -wz . > "${SHPKG_REPO_PACKAGE}" )
 	fi
     done
@@ -301,7 +311,7 @@ shpkg__tag_write() {
     if ! [ -d "${SHPKG_REPO_TAG_DIR}" ]; then
         verbose mkdir -p "${SHPKG_REPO_TAG_DIR}"
     fi
-    echo "echo ${DATE} > ${SHPKG_REPO_TAG_DIR}/$1"
+    puts "echo ${DATE} > ${SHPKG_REPO_TAG_DIR}/$1"
     echo "${DATE}" > "${SHPKG_REPO_TAG_DIR}/$1"
 }
 
@@ -324,14 +334,14 @@ shpkg_install () {
                 SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
                 SHPKG_REPO_PACKAGE_CHECKSUM="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.SHA256"
                 ( verbose cd "${SHPKG_DIR}" &&
-		      echo "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
+		      puts "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
 		      pax -rdz < "${SHPKG_REPO_PACKAGE}"; )
 	        if ! [ -d "${SHPKG_REPO_INSTALLED_DIR}" ]; then
 		    verbose mkdir -p "${SHPKG_REPO_INSTALLED_DIR}"
 	        fi
-	        echo "echo Version: ${SHPKG_REPO_VERSION} > ${SHPKG_REPO_INSTALLED}"
+	        puts "echo Version: ${SHPKG_REPO_VERSION} > ${SHPKG_REPO_INSTALLED}"
 	        echo "Version: ${SHPKG_REPO_VERSION}" > "${SHPKG_REPO_INSTALLED}"
-                echo "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
+                puts "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
                 cat "${SHPKG_REPO_PACKAGE_CHECKSUM}" >> "${SHPKG_REPO_INSTALLED}"
 	    fi
         fi
