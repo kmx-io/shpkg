@@ -4,7 +4,7 @@
 set -e
 
 # Config
-SHPKG_DIR=${SHPKG_DIR:-~/shpkg}
+: ${SHPKG_DIR:=~/shpkg}
 SHPKG_SHARE_DIR="${SHPKG_DIR}/share/shpkg"
 
 # SHPKG
