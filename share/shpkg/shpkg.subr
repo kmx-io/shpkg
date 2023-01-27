@@ -13,15 +13,28 @@ err () {
     exit "$R"
 }
 
-puts () {
-    printf '\33[0;34m'
+verbose_puts () {
+    if [ "x$1" = "x1" ]; then
+        printf '\33[0;34m'
+    elif [ "x$1" = "x2" ]; then
+        printf '\33[0;35m'
+    else
+        err 1 "bad verbose level"
+    fi
+    shift
     echo -n "$@"
     printf '\33[0m\n'
 }
 
 verbose () {
-    puts "$@"
-    "$@"
+    if [ "x$1" = "x-n" ]; then
+        shift
+        verbose_puts "$@"
+    else
+        verbose_puts "$@"
+        shift
+        "$@"
+    fi
 }
 
 # Config
@@ -76,16 +89,16 @@ export PKG_CONFIG_PATH="${SHPKG_LIB_DIR}/pkgconfig"
 
 # Setup
 if ! [ -d "${SHPKG_FAKE_DIR}" ]; then
-    verbose mkdir -p "${SHPKG_FAKE_DIR}"
+    verbose 1 mkdir -p "${SHPKG_FAKE_DIR}"
 fi
 if ! [ -d "${SHPKG_PACKAGE_DIR}" ]; then
-    verbose mkdir -p "${SHPKG_PACKAGE_DIR}"
+    verbose 1 mkdir -p "${SHPKG_PACKAGE_DIR}"
 fi
 if ! [ -d "${SHPKG_SRC_DIR}" ]; then
-    verbose mkdir -p "${SHPKG_SRC_DIR}"
+    verbose 1 mkdir -p "${SHPKG_SRC_DIR}"
 fi
 if ! [ -d "${SHPKG_VAR_DB_DIR}" ]; then
-    verbose mkdir -p "${SHPKG_VAR_DB_DIR}"
+    verbose 1 mkdir -p "${SHPKG_VAR_DB_DIR}"
 fi
 
 # SHA256
@@ -114,13 +127,13 @@ shpkg_clone () {
         SHPKG_REPO_GIT_URL="$(shpkg_git_url "${REPO}")"
         SHPKG_REPO_BASENAME="$(basename "${SHPKG_REPO_DIR}")"
         if ! [ -d "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" ]; then
-            verbose mkdir -p "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}"
-            ( verbose cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}" &&
-                  verbose git clone "${SHPKG_REPO_GIT_URL}" \
+            verbose 1 mkdir -p "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}"
+            ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}" &&
+                  verbose 1 git clone "${SHPKG_REPO_GIT_URL}" \
                           "${SHPKG_REPO_BASENAME}" &&
-                  verbose cd "${SHPKG_REPO_BASENAME}" &&
-                  verbose git submodule init &&
-                  verbose git submodule update
+                  verbose 1 cd "${SHPKG_REPO_BASENAME}" &&
+                  verbose 1 git submodule init &&
+                  verbose 1 git submodule update
             )
         fi
     done
@@ -133,8 +146,8 @@ shpkg_depends_on () {
 shpkg_fetch () {
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
-        ( verbose cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
-              verbose git fetch
+        ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
+              verbose 1 git fetch
         )
     done
 }
@@ -151,8 +164,8 @@ shpkg_git_url () {
 shpkg_pull () {
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
-        ( verbose cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
-              verbose git pull; )
+        ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
+              verbose 1 git pull; )
     done
 }
 
@@ -160,7 +173,8 @@ shpkg_remove () {
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
         SHPKG_REPO_PARENT_DIR="$(shpkg_src_parent_dir "${REPO}")"
-        verbose rm -rf "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
+        verbose 1 rm -rf "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
+        verbose -n 1 "rmdir ${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}"
         rmdir "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}" 2>/dev/null || true
     done
 }
@@ -185,19 +199,19 @@ shpkg_version () {
 
 # Building from sources
 shpkg_autogen () {
-    verbose shpkg_clone "$@"
+    verbose 2 shpkg_clone "$@"
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
         if [ -x "${SHPKG_REPO_SRC_DIR}/autogen" ]; then
-            ( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
-                  verbose ./autogen; )
+            ( verbose 1 cd "${SHPKG_REPO_SRC_DIR}" &&
+                  verbose 1 ./autogen; )
         elif [ -f "${SHPKG_REPO_SRC_DIR}/autogen.sh" ]; then
-            ( verbose cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
-                  verbose sh autogen.sh; )
+            ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
+                  verbose 1 sh autogen.sh; )
         elif [ -x "${SHPKG_REPO_SRC_DIR}/bootstrap" ]; then
-            ( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
-                  verbose ./bootstrap; )
+            ( verbose 1 cd "${SHPKG_REPO_SRC_DIR}" &&
+                  verbose 1 ./bootstrap; )
         fi
     done
 }
@@ -208,11 +222,11 @@ shpkg_build () {
         SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
 	if shpkg__tag_is_absent build-done; then
-	    ( verbose shpkg_configure "${REPO}"; )
+	    ( verbose 2 shpkg_configure "${REPO}"; )
             SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             if [ -f "${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
-		( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
-                      verbose make; )
+		( verbose 1 cd "${SHPKG_REPO_SRC_DIR}" &&
+                      verbose 1 make; )
             elif [ -f "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}/CMakeLists.txt" ]; then
 		cmake --build "${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}"
             fi
@@ -234,19 +248,19 @@ shpkg_configure () {
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
         SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
 	if shpkg__tag_is_absent configure-done; then
-            ( verbose shpkg_autogen "${REPO}"; )
+            ( verbose 2 shpkg_autogen "${REPO}"; )
             SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             if ! [ -d "${SHPKG_REPO_FAKE_DIR}" ]; then
-                verbose mkdir -p "${SHPKG_REPO_FAKE_DIR}"
+                verbose 1 mkdir -p "${SHPKG_REPO_FAKE_DIR}"
             fi
             if [ -x "${SHPKG_REPO_SRC_DIR}/configure" ]; then
-                ( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
-                      verbose ./configure --prefix "${SHPKG_PREFIX}"; )
+                ( verbose 1 cd "${SHPKG_REPO_SRC_DIR}" &&
+                      verbose 1 ./configure --prefix "${SHPKG_PREFIX}"; )
             elif [ -x "${SHPKG_REPO_SRC_DIR}/configure.sh" ]; then
-                ( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
-                      verbose ./configure.sh --prefix "${SHPKG_PREFIX}"; )
+                ( verbose 1 cd "${SHPKG_REPO_SRC_DIR}" &&
+                      verbose 1 ./configure.sh --prefix "${SHPKG_PREFIX}"; )
             elif [ -f "${SHPKG_REPO_SRC_DIR}/CMakeLists.txt" ]; then
-                cmake -S "${SHPKG_REPO_SRC_DIR}" -B "${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}" -D CMAKE_INSTALL_PREFIX:PATH="${SHPKG_PREFIX}" -D BUILD_SHARED_LIBS=ON
+                verbose 1 cmake -S "${SHPKG_REPO_SRC_DIR}" -B "${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}" -D CMAKE_INSTALL_PREFIX:PATH="${SHPKG_PREFIX}" -D BUILD_SHARED_LIBS=ON
             fi
             shpkg__tag_write configure-done
         fi
@@ -254,20 +268,20 @@ shpkg_configure () {
 }
 
 shpkg_fake () {
-    verbose shpkg_build "$@"
+    verbose 2 shpkg_build "$@"
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
         SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "${REPO}")"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
         if [ -d "${SHPKG_REPO_FAKE_DIR}" ]; then
-	    verbose rm -rf "${SHPKG_REPO_FAKE_DIR}"
+	    verbose 1 rm -rf "${SHPKG_REPO_FAKE_DIR}"
 	fi
-        verbose mkdir -p "${SHPKG_REPO_FAKE_DIR}"
+        verbose 1 mkdir -p "${SHPKG_REPO_FAKE_DIR}"
         if [ -f "${SHPKG_REPO_SRC_DIR}/Makefile" ]; then
-            ( verbose cd "${SHPKG_REPO_SRC_DIR}" &&
-                  verbose make prefix="${SHPKG_REPO_FAKE_DIR}" install; )
+            ( verbose 1 cd "${SHPKG_REPO_SRC_DIR}" &&
+                  verbose 1 make prefix="${SHPKG_REPO_FAKE_DIR}" install; )
         elif [ -f "${SHPKG_REPO_SRC_DIR}/CMakeLists.txt" ]; then
-            cmake --install "${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}" --prefix "${SHPKG_REPO_FAKE_DIR}"
+            verbose 1 cmake --install "${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}" --prefix "${SHPKG_REPO_FAKE_DIR}"
         fi
     done
 }
@@ -283,18 +297,18 @@ shpkg_package () {
         SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
 	if ! [ -f "${SHPKG_REPO_PACKAGE}" ]; then
             SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "${REPO}")"
-	    verbose shpkg_fake "${REPO}"
+	    verbose 2 shpkg_fake "${REPO}"
             SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
             SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
             SHPKG_REPO_PACKAGE_CHECKSUM="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.SHA256"
             SHPKG_REPO_PACKAGE_DIR="$(dirname "${SHPKG_REPO_PACKAGE}")"
             if ! [ -d "${SHPKG_REPO_PACKAGE_DIR}" ]; then
-		verbose mkdir -p "${SHPKG_REPO_PACKAGE_DIR}"
+		verbose 1 mkdir -p "${SHPKG_REPO_PACKAGE_DIR}"
             fi
-            ( verbose cd "${SHPKG_REPO_FAKE_DIR}" &&
-                  puts "shpkg_checksum > ${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
+            ( verbose 1 cd "${SHPKG_REPO_FAKE_DIR}" &&
+                  verbose -n 1 "shpkg_checksum > ${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
                   shpkg_checksum > "${SHPKG_REPO_PACKAGE_CHECKSUM}" &&
-		  puts "pax -wz . > ${SHPKG_REPO_PACKAGE}" &&
+		  verbose -n 1 "pax -wz . > ${SHPKG_REPO_PACKAGE}" &&
 		  pax -wz . > "${SHPKG_REPO_PACKAGE}" )
 	fi
     done
@@ -310,9 +324,9 @@ shpkg__tag_write() {
     SHPKG_REPO_TAG_DIR="${SHPKG_TAG_DIR}/${SHPKG_REPO_DIR}/${SHPKG_REPO_VERSION}"
     DATE="$(date +%F\ %T)"
     if ! [ -d "${SHPKG_REPO_TAG_DIR}" ]; then
-        verbose mkdir -p "${SHPKG_REPO_TAG_DIR}"
+        verbose 1 mkdir -p "${SHPKG_REPO_TAG_DIR}"
     fi
-    puts "echo ${DATE} > ${SHPKG_REPO_TAG_DIR}/$1"
+    verbose -n 1 "echo ${DATE} > ${SHPKG_REPO_TAG_DIR}/$1"
     echo "${DATE}" > "${SHPKG_REPO_TAG_DIR}/$1"
 }
 
@@ -328,21 +342,21 @@ shpkg_install () {
 	    if ! [ -f "${SHPKG_REPO_INSTALLED}" ] ||
 		    ! head -n 1 < "${SHPKG_REPO_INSTALLED}" |
 		        grep "Version: ${SHPKG_REPO_VERSION}" >/dev/null; then
-	        ( verbose shpkg_install_dependencies "${REPO}"; )
-	        ( verbose shpkg_build "${REPO}"; )
-	        ( verbose shpkg_package "${REPO}"; )
+	        ( verbose 2 shpkg_install_dependencies "${REPO}"; )
+	        ( verbose 2 shpkg_build "${REPO}"; )
+	        ( verbose 2 shpkg_package "${REPO}"; )
                 SHPKG_REPO_VERSION="$(shpkg_version "${REPO}")"
                 SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
                 SHPKG_REPO_PACKAGE_CHECKSUM="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.SHA256"
-                ( verbose cd "${SHPKG_DIR}" &&
-		      puts "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
+                ( verbose 1 cd "${SHPKG_DIR}" &&
+		      verbose -n 1 "pax -rdz < ${SHPKG_REPO_PACKAGE}" &&
 		      pax -rdz < "${SHPKG_REPO_PACKAGE}"; )
 	        if ! [ -d "${SHPKG_REPO_INSTALLED_DIR}" ]; then
-		    verbose mkdir -p "${SHPKG_REPO_INSTALLED_DIR}"
+		    verbose 1 mkdir -p "${SHPKG_REPO_INSTALLED_DIR}"
 	        fi
-	        puts "echo Version: ${SHPKG_REPO_VERSION} > ${SHPKG_REPO_INSTALLED}"
+	        verbose -n 1 "echo Version: ${SHPKG_REPO_VERSION} > ${SHPKG_REPO_INSTALLED}"
 	        echo "Version: ${SHPKG_REPO_VERSION}" > "${SHPKG_REPO_INSTALLED}"
-                puts "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
+                verbose -n 1 "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
                 cat "${SHPKG_REPO_PACKAGE_CHECKSUM}" >> "${SHPKG_REPO_INSTALLED}"
 	    fi
         fi
@@ -353,7 +367,7 @@ shpkg_install_dependencies () {
     for REPO; do
         SHPKG_REPO_DEPENDS_ON="$(shpkg_depends_on "${REPO}")"
         if [ "x${SHPKG_REPO_DEPENDS_ON}" != "x" ]; then
-            ( verbose shpkg_install ${SHPKG_REPO_DEPENDS_ON}; )
+            ( verbose 2 shpkg_install ${SHPKG_REPO_DEPENDS_ON}; )
         fi
     done
 }
@@ -365,32 +379,32 @@ shpkg_uninstall () {
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
 	SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
         if [ -f "${SHPKG_REPO_INSTALLED}" ]; then
-            verbose cd "${SHPKG_DIR}"
+            verbose 1 cd "${SHPKG_DIR}"
             grep -v : "${SHPKG_REPO_INSTALLED}" |
                 cut -d '(' -f 2 |
                 cut -d ')' -f 1 |
                 while read F; do
                     if grep -E "^SHA256 \\($F\\) = " "${SHPKG_REPO_INSTALLED}" |
                             "${SHPKG_SHA256}" -c; then
-                        verbose rm "$F"
+                        verbose 1 rm "$F"
                     fi
                 done
-            verbose rm "${SHPKG_REPO_INSTALLED}"
+            verbose 1 rm "${SHPKG_REPO_INSTALLED}"
         fi
     done
 }
 
 shpkg_upgrade () {
-    verbose shpkg_pull "$@"
-    verbose shpkg_build "$@"
-    verbose shpkg_package "$@"
-    verbose shpkg_install "$@"
+    verbose 2 shpkg_pull "$@"
+    verbose 2 shpkg_build "$@"
+    verbose 2 shpkg_package "$@"
+    verbose 2 shpkg_install "$@"
 }
 
 # Meta
 shpkg_clean() {
     for REPO; do
-        ( verbose shpkg_uninstall "${REPO}"; )
+        ( verbose 2 shpkg_uninstall "${REPO}"; )
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
         SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "${REPO}")"
         rm -rf "${SHPKG_REPO_FAKE_DIR}"

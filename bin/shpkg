@@ -13,56 +13,56 @@ SHPKG_SHARE_DIR="${SHPKG_DIR}/share/shpkg"
 # CLI
 if [ "x$1" = "xbuild" ]; then
     shift
-    verbose shpkg_build "$@"
+    verbose 2 shpkg_build "$@"
     exit
 elif [ "x$1" = "xclone" ]; then
     shift
-    verbose shpkg_clone "$@"
+    verbose 2 shpkg_clone "$@"
     exit
 elif [ "x$1" = "xconfigure" ]; then
     shift
-    verbose shpkg_configure "$@"
+    verbose 2 shpkg_configure "$@"
     exit
 elif [ "x$1" = "xfake" ]; then
     shift
-    verbose shpkg_fake "$@"
+    verbose 2 shpkg_fake "$@"
     exit
 elif [ "x$1" = "xfetch" ] ||
      [ "x$1" = "xf" ]; then
     shift
-    verbose shpkg_fetch "$@"
+    verbose 2 shpkg_fetch "$@"
     exit
 elif [ "x$1" = "xinstall" ] ||
      [ "x$1" = "xi" ]; then
     shift
-    verbose shpkg_install "$@"
+    verbose 2 shpkg_install "$@"
     exit
 elif [ "x$1" = "xpackage" ] ||
      [ "x$1" = "xpkg" ]; then
     shift
-    verbose shpkg_package "$@"
+    verbose 2 shpkg_package "$@"
     exit
 elif [ "x$1" = "xpull" ] ||
      [ "x$1" = "xp" ]; then
     shift
-    verbose shpkg_pull "$@"
+    verbose 2 shpkg_pull "$@"
     exit
 elif [ "x$1" = "xremove" ] ||
      [ "x$1" = "xrm" ]; then
     shift
-    verbose shpkg_uninstall "$@"
-    verbose shpkg_remove "$@"
+    verbose 2 shpkg_uninstall "$@"
+    verbose 2 shpkg_remove "$@"
     exit
 elif [ "x$1" = "xuninstall" ]; then
     shift
-    verbose shpkg_uninstall "$@"
+    verbose 2 shpkg_uninstall "$@"
     exit
 elif [ "x$1" = "xupdate" ]; then
-    verbose shpkg_update
+    verbose 2 shpkg_update
     exit
 elif [ "x$1" = "xupgrade" ]; then
     shift
-    verbose shpkg_upgrade "$@"
+    verbose 2 shpkg_upgrade "$@"
     exit
 fi
 
