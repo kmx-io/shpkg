@@ -113,34 +113,55 @@ shpkg_sha256sum () {
     done
 }
 
-
-# Source repository
+# Repo index
 SHPKG_REPO_INDEX="${SHPKG_SHARE_DIR}/repo_index"
 if ! [ -f "${SHPKG_REPO_INDEX}" ]; then
     err 1 "${SHPKG_REPO_INDEX}: not found"
 fi
 
+shpkg_depends_on () {
+    shpkg_repo_info "$@" | cut -d ' ' -f 5 | tr ',' ' '
+}
+
+shpkg_dir () {
+    shpkg_repo_info "$@" | cut -d ' ' -f 2
+}
+
+shpkg_git_branch () {
+    shpkg_repo_info "$@" | cut -d ' ' -f 4
+}
+
+shpkg_git_url () {
+    shpkg_repo_info "$@" | cut -d ' ' -f 3
+}
+
+shpkg_repo_info () {
+    [ "x$#" = "x1" ] || return 1
+    grep "^$1 " "${SHPKG_REPO_INDEX}"
+}
+
+shpkg_src_parent_dir () {
+    dirname "$(shpkg_dir "${REPO}")"
+}
+
+# Source repository
 shpkg_clone () {
     for REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${REPO}")"
         SHPKG_REPO_PARENT_DIR="$(shpkg_src_parent_dir "${REPO}")"
+        SHPKG_REPO_GIT_BRANCH="$(shpkg_git_branch "${REPO}")"
         SHPKG_REPO_GIT_URL="$(shpkg_git_url "${REPO}")"
         SHPKG_REPO_BASENAME="$(basename "${SHPKG_REPO_DIR}")"
         if ! [ -d "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" ]; then
             verbose 1 mkdir -p "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}"
             ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}" &&
-                  verbose 1 git clone "${SHPKG_REPO_GIT_URL}" \
-                          "${SHPKG_REPO_BASENAME}" &&
+                  verbose 1 git clone "${SHPKG_REPO_GIT_URL}" -b "${SHPKG_REPO_GIT_BRANCH}" "${SHPKG_REPO_BASENAME}" &&
                   verbose 1 cd "${SHPKG_REPO_BASENAME}" &&
                   verbose 1 git submodule init &&
                   verbose 1 git submodule update
             )
         fi
     done
-}
-
-shpkg_depends_on () {
-    shpkg_repo_info "$@" | cut -d ' ' -f 4 | tr ',' ' '
 }
 
 shpkg_fetch () {
@@ -150,15 +171,6 @@ shpkg_fetch () {
               verbose 1 git fetch
         )
     done
-}
-
-shpkg_repo_info () {
-    [ "x$#" = "x1" ] || return 1
-    grep "^$1 " "${SHPKG_REPO_INDEX}"
-}
-
-shpkg_git_url () {
-    shpkg_repo_info "$@" | cut -d ' ' -f 3
 }
 
 shpkg_pull () {
@@ -177,14 +189,6 @@ shpkg_remove () {
         verbose -n 1 "rmdir ${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}"
         rmdir "${SHPKG_SRC_DIR}/${SHPKG_REPO_PARENT_DIR}" 2>/dev/null || true
     done
-}
-
-shpkg_dir () {
-    shpkg_repo_info "$@" | cut -d ' ' -f 2
-}
-
-shpkg_src_parent_dir () {
-    dirname "$(shpkg_dir "${REPO}")"
 }
 
 shpkg_version () {
