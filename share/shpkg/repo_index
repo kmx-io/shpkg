@@ -3,7 +3,7 @@ c3 c3-lang/c3 https://git.kmx.io/c3-lang/c3.git master libbsd,libmd
 glfw3 glfw/glfw https://github.com/glfw/glfw.git master
 help2man gnu.org/help2man https://git.kmx.io/gnu/help2man.git master
 libbsd freedesktop.org/libbsd https://gitlab.freedesktop.org/libbsd/libbsd.git main libmd
-libmd hadrons.org/libmd https://git.hadrons.org/git/libmd.git master
+libmd hadrons.org/libmd https://git.hadrons.org/git/libmd.git main
 libtool gnu.org/libtool git://git.savannah.gnu.org/libtool.git master help2man,texinfo
 pkg-config freedesktop.org/pkg-config https://gitlab.freedesktop.org/pkg-config/pkg-config.git master
 rtbuf rtbuf/rtbuf https://git.kmx.io/rtbuf/rtbuf.git master glfw3
