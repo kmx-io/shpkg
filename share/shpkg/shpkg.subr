@@ -59,9 +59,9 @@ fi
 
 SHPKG_PREFIX="${SHPKG_DIR}"
 
-if which sha256 >/dev/null; then
+if which sha256 >/dev/null 2>&1; then
     SHPKG_SHA256=sha256
-elif which sha256sum >/dev/null; then
+elif which sha256sum >/dev/null 2>&1; then
     SHPKG_SHA256=sha256sum
 else
     err 1 "sha256 executable not found"
