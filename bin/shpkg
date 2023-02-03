@@ -15,6 +15,34 @@ if [ "x$1" = "xbuild" ]; then
     shift
     verbose 2 shpkg_build "$@"
     exit
+elif [ "x$1" = "xclean-all" ]; then
+    shift
+    verbose 2 shpkg_clean_all "$@"
+    exit
+elif [ "x$1" = "xclean-sources" ]; then
+    shift
+    verbose 2 shpkg_clean_sources "$@"
+    exit
+elif [ "x$1" = "xclean-build" ]; then
+    shift
+    verbose 2 shpkg_clean_build "$@"
+    exit
+elif [ "x$1" = "xclean-configure" ]; then
+    shift
+    verbose 2 shpkg_clean_configure "$@"
+    exit
+elif [ "x$1" = "xclean-fake" ]; then
+    shift
+    verbose 2 shpkg_clean_fake "$@"
+    exit
+elif [ "x$1" = "xclean-package" ]; then
+    shift
+    verbose 2 shpkg_clean_package "$@"
+    exit
+elif [ "x$1" = "xclean-sources" ]; then
+    shift
+    verbose 2 shpkg_clean_sources "$@"
+    exit
 elif [ "x$1" = "xclone" ]; then
     shift
     verbose 2 shpkg_clone "$@"
@@ -47,12 +75,6 @@ elif [ "x$1" = "xpull" ] ||
     shift
     verbose 2 shpkg_pull "$@"
     exit
-elif [ "x$1" = "xremove" ] ||
-     [ "x$1" = "xrm" ]; then
-    shift
-    verbose 2 shpkg_uninstall "$@"
-    verbose 2 shpkg_remove "$@"
-    exit
 elif [ "x$1" = "xuninstall" ]; then
     shift
     verbose 2 shpkg_uninstall "$@"
@@ -69,23 +91,26 @@ fi
 echo "Usage: shpkg OPERATION PKG ...
 
 Source directory operations :
- clone          shortcut for git clone
- fetch          shortcut for git fetch
- pull           shortcut for git pull
- remove | rm    shortcut for uninstall and rm -rf repo
+ clone            shortcut for git clone
+ fetch            shortcut for git fetch
+ pull             shortcut for git pull
+ clean-sources    remove source directory
 
 Compilation operations :
- autogen        shortcut for ./autogen
- configure      shortcut for ./configure
- clean          shortcut for make clean
- build          shortcut for make
+ autogen          shortcut for ./autogen
+ configure        shortcut for ./configure
+ build            shortcut for make
+ clean-configure  remove configured and object files
+ clean-build      remove object files
 
 Package operations :
- fake           install compiled sources into fake directory
- package        build package from sources
- install        install package
- upgrade        pull sources, build package and install
- uninstall      uninstall package
+ fake             install compiled sources into fake directory
+ package          build package from sources
+ install          install package
+ upgrade          pull sources, build package and install
+ uninstall        uninstall package
+ clean-fake       remove fake installation directory
+ clean-package    remove built packages
 " >&2
 
 exit 1
