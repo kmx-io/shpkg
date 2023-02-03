@@ -14,18 +14,8 @@ SHPKG_LIB_DIR="${SHPKG_DIR}/lib"
 SHPKG_SHARE_DIR="${SHPKG_DIR}/share/shpkg"
 SHPKG_SRC_DIR="${SHPKG_DIR}/src"
 SHPKG_VAR_DB_DIR="${SHPKG_DIR}/var/db/shpkg"
-SHPKG_VAR_LOG_DIR="${SHPKG_DIR}/var/log/shpkg"
 
 SHPKG_PREFIX="${SHPKG_DIR}"
-
-# Logging
-SHPKG_LOG="${SHPKG_VAR_LOG_DIR}/shpkg.${SHPKG_DATE}.log"
-echo "Date: ${SHPKG_DATE}" > "${SHPKG_LOG}"
-echo "Command: $0" "$@" >> "${SHPKG_LOG}"
-
-shpkg_log () {
-    tee -a "${SHPKG_LOG}"
-}
 
 # Console output
 verbose__puts () {
@@ -64,9 +54,6 @@ err () {
     } >&2
     verbose 1 exit "$R"
 }
-
-# Startup
-# verbose -n 2 "logging to ${SHPKG_LOG}"
 
 # C compiler
 if [ "x${CC}" = "x" ]; then
