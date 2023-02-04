@@ -444,10 +444,18 @@ shpkg_uninstall () {
 }
 
 shpkg_upgrade () {
-    verbose 2 shpkg_pull "$@"
-    verbose 2 shpkg_build "$@"
-    verbose 2 shpkg_package "$@"
-    verbose 2 shpkg_install "$@"
+    verbose 2 shpkg_upgrade_shpkg
+    if [ $# -gt 0 ]; then
+        verbose 2 shpkg_pull "$@"
+        verbose 2 shpkg_build "$@"
+        verbose 2 shpkg_package "$@"
+        verbose 2 shpkg_install "$@"
+    fi
+}
+
+shpkg_upgrade_shpkg () {
+    ( verbose 1 cd "${SHPKG_DIR}" &&
+          verbose 1 git pull; )
 }
 
 # Clean
