@@ -456,7 +456,8 @@ shpkg_upgrade () {
 
 shpkg_upgrade_shpkg () {
     ( verbose 1 cd "${SHPKG_DIR}" &&
-          verbose 1 git pull; )
+          verbose 1 git pull &&
+          verbose 1 . "${SHPKG_DIR}/share/shpkg/shpkg.subr"; )
 }
 
 # Clean
