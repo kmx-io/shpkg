@@ -82,7 +82,7 @@ SHPKG_TAG_DIR="${SHPKG_TARGET_DIR}/tag"
 # OS detection
 SHPKG_OS="$(uname)"
 if [ "x${SHPKG_OS}" = "xLinux" ]; then
-    SHPKG_OS="${SHPKG_OS}/$(uname -a | grep -io -e Debian -e Gentoo -e Ubuntu)"
+    SHPKG_OS="${SHPKG_OS}/$(uname -a | grep -io -e Debian -e gentoo -e Ubuntu)"
 fi
 
 SHPKG_OS_DIR="${SHPKG_SHARE_DIR}/${SHPKG_OS}"
