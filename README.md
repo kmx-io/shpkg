@@ -1,5 +1,14 @@
 # shpkg
 
+Minimalist package manager for UNIX written in shell (/bin/sh).
+
+## Installation
+
+```
+$ cd && git clone https://git.kmx.io/kmx.io/shpkg.git && . shpkg/etc/shpkg/profile
+```
+
+
 ## Usage
 
 ```
