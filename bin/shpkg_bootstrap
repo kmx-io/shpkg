@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+if [ "x$1" = "x" ]; then
+    SHPKG_DIR=~/shpkg
+else
+    SHPKG_DIR="$1"
+fi
+git clone https://git.kmx.io/kmx.io/shpkg.git "${SHPKG_DIR}" >&2
+echo ". ${SHPKG_DIR}/etc/shpkg/profile"
