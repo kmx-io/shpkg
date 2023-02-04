@@ -327,7 +327,7 @@ shpkg_fake () {
 }
 
 shpkg_fake_dir () {
-    echo "${SHPKG_FAKE_DIR}/$(shpkg_dir "$1")"
+    echo "${SHPKG_FAKE_DIR}/$(shpkg_dir "$1")/${SHPKG_PREFIX}"
 }
 
 shpkg_package () {
@@ -408,6 +408,7 @@ shpkg_install () {
 	        echo "Version: ${SHPKG_REPO_VERSION}" > "${SHPKG_REPO_INSTALLED}"
                 verbose -n 1 "cat ${SHPKG_REPO_PACKAGE_CHECKSUM} >> ${SHPKG_REPO_INSTALLED}"
                 cat "${SHPKG_REPO_PACKAGE_CHECKSUM}" >> "${SHPKG_REPO_INSTALLED}"
+                verbose 1 libtool --mode=finish "${SHPKG_LIB_DIR}"
 	    fi
         fi
     done
