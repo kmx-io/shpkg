@@ -185,7 +185,8 @@ shpkg_pull () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
         ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
-              verbose 1 git pull; )
+              verbose 1 git pull &&
+              verbose 1 git submodule update; )
     done
 }
 
