@@ -476,12 +476,15 @@ shpkg_list () {
     grep -Eo '^[^#]*' "${SHPKG_REPO_INDEX}" |
         grep -Ev '\s+#' |
         while read SHPKG_REPO SHPKG_REPO_DIR REST; do
-            echo "${SHPKG_REPO}"
             SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
+            SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
+            if [ -d "${SHPKG_REPO_SRC_DIR}" ] ||
+               [ -f "${SHPKG_REPO_INSTALLED}" ]; then
+                echo "${SHPKG_REPO}"
+            fi
             if [ -d "${SHPKG_REPO_SRC_DIR}" ]; then
                 echo "  Sources: ${SHPKG_REPO_SRC_DIR}"
             fi
-            SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
             if [ -f "${SHPKG_REPO_INSTALLED}" ]; then
                 head -n 1 "${SHPKG_REPO_INSTALLED}" | \
                     sed -e 's/^Version: /  Installed: /'
