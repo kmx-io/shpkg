@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 usage () {
     {
@@ -14,8 +15,6 @@ usage () {
     } >&2
     exit 1
 }
-
-set -e
 
 # config
 FORCE=No
