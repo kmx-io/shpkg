@@ -7,88 +7,12 @@ set -e
 : ${SHPKG_DIR:=~/shpkg}
 SHPKG_SHARE_DIR="${SHPKG_DIR}/share/shpkg"
 
-# SHPKG
+# shpkg
 . ${SHPKG_SHARE_DIR}/shpkg.subr
 
-# CLI
-if [ "x$1" = "xbuild" ]; then
-    shift
-    verbose 2 shpkg_build "$@"
-    exit
-elif [ "x$1" = "xclean-all" ]; then
-    shift
-    verbose 2 shpkg_clean_all "$@"
-    exit
-elif [ "x$1" = "xclean-sources" ]; then
-    shift
-    verbose 2 shpkg_clean_sources "$@"
-    exit
-elif [ "x$1" = "xclean-build" ]; then
-    shift
-    verbose 2 shpkg_clean_build "$@"
-    exit
-elif [ "x$1" = "xclean-configure" ]; then
-    shift
-    verbose 2 shpkg_clean_configure "$@"
-    exit
-elif [ "x$1" = "xclean-fake" ]; then
-    shift
-    verbose 2 shpkg_clean_fake "$@"
-    exit
-elif [ "x$1" = "xclean-package" ]; then
-    shift
-    verbose 2 shpkg_clean_package "$@"
-    exit
-elif [ "x$1" = "xclean-sources" ]; then
-    shift
-    verbose 2 shpkg_clean_sources "$@"
-    exit
-elif [ "x$1" = "xclone" ]; then
-    shift
-    verbose 2 shpkg_clone "$@"
-    exit
-elif [ "x$1" = "xconfigure" ]; then
-    shift
-    verbose 2 shpkg_configure "$@"
-    exit
-elif [ "x$1" = "xfake" ]; then
-    shift
-    verbose 2 shpkg_fake "$@"
-    exit
-elif [ "x$1" = "xfetch" ] ||
-     [ "x$1" = "xf" ]; then
-    shift
-    verbose 2 shpkg_fetch "$@"
-    exit
-elif [ "x$1" = "xinstall" ] ||
-     [ "x$1" = "xi" ]; then
-    shift
-    verbose 2 shpkg_install "$@"
-    exit
-elif [ "x$1" = "xpackage" ] ||
-     [ "x$1" = "xpkg" ]; then
-    shift
-    verbose 2 shpkg_package "$@"
-    exit
-elif [ "x$1" = "xpull" ] ||
-     [ "x$1" = "xp" ]; then
-    shift
-    verbose 2 shpkg_pull "$@"
-    exit
-elif [ "x$1" = "xuninstall" ]; then
-    shift
-    verbose 2 shpkg_uninstall "$@"
-    exit
-elif [ "x$1" = "xupdate" ]; then
-    verbose 2 shpkg_update
-    exit
-elif [ "x$1" = "xupgrade" ]; then
-    shift
-    verbose 2 shpkg_upgrade "$@"
-    exit
-fi
-
-echo "Usage: shpkg OPERATION PKG ...
+# Usage
+usage () {
+    echo "Usage: shpkg OPERATION PKG ...
 
 Source directory operations :
  clone            shortcut for git clone
@@ -112,5 +36,74 @@ Package operations :
  clean-fake       remove fake installation directory
  clean-package    remove built packages
 " >&2
+    exit "$1"
+}
 
-exit 1
+# CLI
+if [ "x$1" = "xbuild" ]; then
+    shift
+    verbose 2 shpkg_build "$@"
+elif [ "x$1" = "xclean-all" ]; then
+    shift
+    verbose 2 shpkg_clean_all "$@"
+elif [ "x$1" = "xclean-sources" ]; then
+    shift
+    verbose 2 shpkg_clean_sources "$@"
+elif [ "x$1" = "xclean-build" ]; then
+    shift
+    verbose 2 shpkg_clean_build "$@"
+elif [ "x$1" = "xclean-configure" ]; then
+    shift
+    verbose 2 shpkg_clean_configure "$@"
+elif [ "x$1" = "xclean-fake" ]; then
+    shift
+    verbose 2 shpkg_clean_fake "$@"
+elif [ "x$1" = "xclean-package" ]; then
+    shift
+    verbose 2 shpkg_clean_package "$@"
+elif [ "x$1" = "xclean-sources" ]; then
+    shift
+    verbose 2 shpkg_clean_sources "$@"
+elif [ "x$1" = "xclone" ]; then
+    shift
+    verbose 2 shpkg_clone "$@"
+elif [ "x$1" = "xconfigure" ]; then
+    shift
+    verbose 2 shpkg_configure "$@"
+elif [ "x$1" = "xfake" ]; then
+    shift
+    verbose 2 shpkg_fake "$@"
+elif [ "x$1" = "xfetch" ] ||
+     [ "x$1" = "xf" ]; then
+    shift
+    verbose 2 shpkg_fetch "$@"
+elif [ "x$1" = "xhelp" ] ||
+     [ "x$1" = "xh" ] ||
+     [ "x$1" = "x--help" ] ||
+     [ "x$1" = "x-h" ]; then
+    usage 1
+elif [ "x$1" = "xinstall" ] ||
+     [ "x$1" = "xi" ]; then
+    shift
+    verbose 2 shpkg_install "$@"
+elif [ "x$1" = "xlist" ] ||
+     [ "x$1" = "xl" ]; then
+    shift
+    verbose 2 shpkg_list
+elif [ "x$1" = "xpackage" ] ||
+     [ "x$1" = "xpkg" ]; then
+    shift
+    verbose 2 shpkg_package "$@"
+elif [ "x$1" = "xpull" ] ||
+     [ "x$1" = "xp" ]; then
+    shift
+    verbose 2 shpkg_pull "$@"
+elif [ "x$1" = "xuninstall" ]; then
+    shift
+    verbose 2 shpkg_uninstall "$@"
+elif [ "x$1" = "xupdate" ]; then
+    verbose 2 shpkg_update
+elif [ "x$1" = "xupgrade" ]; then
+    shift
+    verbose 2 shpkg_upgrade "$@"
+fi

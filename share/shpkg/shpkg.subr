@@ -455,14 +455,8 @@ shpkg_upgrade () {
     fi
 }
 
-shpkg_upgrade_shpkg () {
-    ( verbose 1 cd "${SHPKG_DIR}" &&
-          verbose 1 git pull &&
-          verbose 1 . "${SHPKG_DIR}/share/shpkg/shpkg.subr"; )
-}
-
-# Clean
-shpkg_clean_all() {
+# Misc
+shpkg_clean_all () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
         SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "${SHPKG_REPO}")"
@@ -476,4 +470,27 @@ shpkg_clean_all() {
         SHPKG_REPO_TAG_DIR="${SHPKG_TAG_DIR}/${SHPKG_REPO_DIR}"
         verbose 1 rm -rf "${SHPKG_REPO_TAG_DIR}"
     done
+}
+
+shpkg_list () {
+    grep -Eo '^[^#]*' "${SHPKG_REPO_INDEX}" |
+        grep -Ev '\s+#' |
+        while read SHPKG_REPO SHPKG_REPO_DIR REST; do
+            echo "${SHPKG_REPO}"
+            SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
+            if [ -d "${SHPKG_REPO_SRC_DIR}" ]; then
+                echo "  Sources: ${SHPKG_REPO_SRC_DIR}"
+            fi
+            SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
+            if [ -f "${SHPKG_REPO_INSTALLED}" ]; then
+                head -n 1 "${SHPKG_REPO_INSTALLED}" | \
+                    sed -e 's/^Version: /  Installed: /'
+            fi
+        done
+}
+
+shpkg_upgrade_shpkg () {
+    ( verbose 1 cd "${SHPKG_DIR}" &&
+          verbose 1 git pull &&
+          verbose 1 . "${SHPKG_DIR}/share/shpkg/shpkg.subr"; )
 }

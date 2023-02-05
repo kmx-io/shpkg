@@ -1,9 +1,60 @@
 #!/bin/sh
+
+usage () {
+    {
+        echo 'Usage :'
+        echo '  shpkg_bootstrap [-f] [SHPKG_DIR]'
+        echo '  SHPKG_DIR="$HOME/shpkg" shpkg_bootstrap [-f]'
+        echo '                Installs shpkg into SHPKG_DIR.'
+        echo 'Options :'
+        echo '  -f            Clear SHPKG_DIR before installing.'
+        echo 'Environment variables :'
+        echo '  PATH          Binaries path.'
+        echo '  SHPKG_DIR     Target installation directory.'
+    } >&2
+    exit 1
+}
+
 set -e
-if [ "x$1" = "x" ]; then
-    SHPKG_DIR=~/shpkg
-else
-    SHPKG_DIR="$1"
+
+# config
+FORCE=No
+while [ $# -gt 0 ]; do
+    if [ "x$1" = "x-h" ]; then
+        usage
+    elif [ "x$1" = "x-f" ]; then
+        FORCE=Yes
+        shift
+    else
+        SHPKG_DIR="$1"
+        shift
+    fi
+done
+
+if [ "x${SHPKG_DIR}" = "x" ]; then
+    if [ "x${HOME}" = "x" ]; then
+        echo "HOME is not set" >&2
+        exit 1
+    fi
+    SHPKG_DIR="${HOME}/shpkg"
 fi
-git clone https://git.kmx.io/kmx.io/shpkg.git "${SHPKG_DIR}" >&2
+
+# clone
+if [ -d "${SHPKG_DIR}" ]; then
+    if [ "x$FORCE" = "xYes" ]; then
+        rm -rf "${SHPKG_DIR}"
+    fi
+else
+    git clone https://git.kmx.io/kmx.io/shpkg.git "${SHPKG_DIR}"
+fi
+
+# profile
+{
+    echo "export SHPKG_DIR='${SHPKG_DIR}'"
+    echo "export PATH='${SHPKG_DIR}/bin:${PATH}'"
+    echo "export LD_LIBRARY_PATH='${SHPKG_DIR}/lib'"
+} > "${SHPKG_DIR}/etc/shpkg/profile"
+
+# source profile
 echo ". ${SHPKG_DIR}/etc/shpkg/profile"
+. "${SHPKG_DIR}/etc/shpkg/profile"
