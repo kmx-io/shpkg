@@ -156,6 +156,9 @@ shpkg_src_parent_dir () {
 shpkg_clone () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         SHPKG_REPO_PARENT_DIR="$(shpkg_src_parent_dir "${SHPKG_REPO}")"
         SHPKG_REPO_GIT_BRANCH="$(shpkg_git_branch "${SHPKG_REPO}")"
         SHPKG_REPO_GIT_URL="$(shpkg_git_url "${SHPKG_REPO}")"
@@ -175,6 +178,9 @@ shpkg_clone () {
 shpkg_fetch () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
               verbose 1 git fetch
         )
@@ -184,6 +190,9 @@ shpkg_fetch () {
 shpkg_pull () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         ( verbose 1 cd "${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}" &&
               verbose 1 git pull &&
               verbose 1 git submodule update; )
@@ -203,6 +212,9 @@ shpkg_clean_sources () {
 
 shpkg_version () {
     SHPKG_REPO_DIR="$(shpkg_dir "$1")"
+    if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+        err 1 "unknown repo: $SHPKG_REPO"
+    fi
     SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
     if [ -d "${SHPKG_REPO_SRC_DIR}/.git" ]; then
         SHPKG_REPO_HASH="$(git -C "${SHPKG_REPO_SRC_DIR}" show-ref --head HEAD | cut -d ' ' -f 1 | head -n 1)"
@@ -233,6 +245,9 @@ shpkg_autogen () {
 shpkg_build () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         SHPKG_REPO_OBJ_DIR="${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
         SHPKG_REPO_VERSION="$(shpkg_version "${SHPKG_REPO}")"
@@ -259,6 +274,9 @@ shpkg_checksum () {
 shpkg_clean_build () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         SHPKG_REPO_OBJ_DIR="${SHPKG_OBJ_DIR}/${SHPKG_REPO_DIR}"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
         SHPKG_REPO_VERSION="$(shpkg_version "${SHPKG_REPO}")"
@@ -276,6 +294,9 @@ shpkg_clean_build () {
 shpkg_clean_configure () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         SHPKG_REPO_VERSION="$(shpkg_version "${SHPKG_REPO}")"
         shpkg__tag_remove configure-done
     done
@@ -284,6 +305,9 @@ shpkg_clean_configure () {
 shpkg_configure () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         SHPKG_REPO_FAKE_DIR="$(shpkg_fake_dir "${SHPKG_REPO}")"
         SHPKG_REPO_SRC_DIR="${SHPKG_SRC_DIR}/${SHPKG_REPO_DIR}"
         SHPKG_REPO_VERSION="$(shpkg_version "${SHPKG_REPO}")"
@@ -333,6 +357,9 @@ shpkg_fake_dir () {
 shpkg_package () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         SHPKG_REPO_VERSION="$(shpkg_version "${SHPKG_REPO}")"
         SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
 	if ! [ -f "${SHPKG_REPO_PACKAGE}" ]; then
@@ -384,6 +411,9 @@ shpkg__tag_write() {
 shpkg_install () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         if ! grep -Eq "^${SHPKG_REPO_DIR}\$" "${SHPKG_OS_DIR}/system_packages"; then
             SHPKG_REPO_VERSION="$(shpkg_version "${SHPKG_REPO}")"
             SHPKG_REPO_PACKAGE="${SHPKG_PACKAGE_DIR}/${SHPKG_REPO_DIR}-${SHPKG_REPO_VERSION}.tgz"
@@ -416,6 +446,10 @@ shpkg_install () {
 
 shpkg_install_dependencies () {
     for SHPKG_REPO; do
+        SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
         SHPKG_REPO_DEPENDS_ON="$(shpkg_depends_on "${SHPKG_REPO}")"
         if [ "x${SHPKG_REPO_DEPENDS_ON}" != "x" ]; then
             ( verbose 2 shpkg_install ${SHPKG_REPO_DEPENDS_ON}; )
@@ -428,6 +462,9 @@ shpkg_install_dependencies () {
 shpkg_uninstall () {
     for SHPKG_REPO; do
         SHPKG_REPO_DIR="$(shpkg_dir "${SHPKG_REPO}")"
+        if [ "x${SHPKG_REPO_DIR}" = "x" ]; then
+            err 1 "unknown repo: $SHPKG_REPO"
+        fi
 	SHPKG_REPO_INSTALLED="${SHPKG_VAR_DB_DIR}/installed/${SHPKG_REPO_DIR}"
         if [ -f "${SHPKG_REPO_INSTALLED}" ]; then
             verbose 1 cd "${SHPKG_DIR}"
